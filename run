@@ -1,2 +1,2 @@
 #!/bin/bash
-./.venv/bin/Python live_status.py
+./.venv/bin/python live_status.py
