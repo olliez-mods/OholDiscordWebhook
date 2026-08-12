@@ -1,0 +1,16 @@
+msg_id: ''
+servers:
+- bigserver2.onehouronelife.com
+- friends.onehouronelife.com
+- oneday.onehouronelife.com
+- server1.onehouronelife.com
+- server2.onehouronelife.com
+webhook: 
+
+trim_domain: no
+domain_to_trim: .onehouronelife.com
+
+show_port: yes
+
+use_bs2_bot: no
+bs2_bot_token: token_here
