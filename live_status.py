@@ -1,20 +1,14 @@
 import yaml
 import requests
-import socket
-import time
 import json
 
-from get_player_stats import get_bs2_player_status
+import server_cache
+from get_player_stats import get_bs2_player_status, BS2_SERVER
 
 settings = None
 with open('settings.yaml', 'r') as ys:
     settings = yaml.safe_load(ys)
 
-c_time = int(time.time())
-sp_relative = f'<t:{c_time}:R>'
-sp_full = f'<t:{c_time}:F>'
-
-description = f'{sp_full}\nRemote servers ([URL LINK](https://onehouronelife.com/reflector/server.php?action=report)):\n'
 total_players = 0
 total_available = 0
 
@@ -44,37 +38,40 @@ server_lines = []
 PORT_STRING = ":8005" if (settings["show_port"]) else ""
 JASON_REFLECTOR_URL = "https://onehouronelife.com/reflector/server.php?action=report"
 
+# Shared with the other instances on this machine, so the servers get probed once per
+# cycle however many of us cron starts at the same moment
+statuses = server_cache.get_statuses(settings['servers'], settings)
+
+# These numbers can be as old as the cache TTL, so stamp the embed with when they were
+# actually gathered rather than with now
+c_time = server_cache.oldest_timestamp(statuses, settings['servers'])
+sp_relative = f'<t:{c_time}:R>'
+sp_full = f'<t:{c_time}:F>'
+
+description = f'{sp_full}\nRemote servers ([URL LINK]({JASON_REFLECTOR_URL})):\n'
+
 for server in settings['servers']:
     server_display = str(server)
     domain_to_trim = settings["domain_to_trim"]
     if(settings["trim_domain"] and server_display.endswith(domain_to_trim)):
         server_display = server_display[:-len(domain_to_trim)]
 
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(1)
-            s.connect((server, 8005))
-            s.settimeout(1)
-            data = s.recv(1024).split()[1].split(b'/')
-            data = [int(data[0]), int(data[1])]
-            total_players += data[0]
-            total_available += data[1]
-            server_lines.append(f'|--> {server_display}{PORT_STRING} -> {data[0]} /{data[1]}')
-    except socket.error as e:
+    status = statuses[server]
+    if(status["online"]):
+        total_players += status["players"]
+        total_available += status["capacity"]
+        server_lines.append(f'|--> {server_display}{PORT_STRING} -> {status["players"]} /{status["capacity"]}')
+    else:
         server_lines.append(f'|--> {server_display}{PORT_STRING} -> OFFLINE')
-        print(e)
 
-    # Attemp to get extra family data if enabled, and correct server
-    if (bs2_extra_data == None and settings["use_bs2_bot"]):
-        try:
-            bs2_extra_data = get_bs2_player_status(settings["bs2_bot_token"], server)
-        except Exception as e:
-            print(e, "Error getting extra family data"); bs2_extra_data = None
-        if(bs2_extra_data): bs2_server_ip = server
+# Attemp to get extra family data if enabled
+if(settings["use_bs2_bot"] and BS2_SERVER in settings['servers']):
+    try:
+        bs2_extra_data = get_bs2_player_status(settings["bs2_bot_token"], BS2_SERVER)
+    except Exception as e:
+        print(e, "Error getting extra family data"); bs2_extra_data = None
+    if(bs2_extra_data): bs2_server_ip = BS2_SERVER
 
-# Only the server rows get padded, the footer isn't a column-aligned row.
-# Inside a code block: Discord's normal font is proportional, so spaces only
-# line up as columns in monospace
 server_table = pad_lines("\n".join(server_lines), [1, 3])
 server_table = f'{server_table}\n---------------------------\nTotal ::: {total_players} / {total_available}'
 description = f'{description}```\n{server_table}\n```\n'
