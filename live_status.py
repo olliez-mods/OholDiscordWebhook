@@ -1,3 +1,4 @@
+import sys
 import yaml
 import requests
 import json
@@ -96,14 +97,10 @@ if(bs2_extra_data):
         "description": f"{family_description}{family_table}"
     })
 
-if settings.get('msg_id'):
-    r = requests.patch(f"{settings['webhook']}/messages/{settings['msg_id']}", json = data)
-#    if r.status_code != 200:
-#        settings.pop('msg_id')
-#        with open('settings.yaml', 'w') as ys:
-#            yaml.dump(settings, ys, default_flow_style = False)
+# Only makes a new message when asked, and prints the id for you to paste into
+# settings.yaml yourself
+if(len(sys.argv) > 1 and sys.argv[1] == "create"):
+    msg_id = json.loads(requests.post(f"{settings['webhook']}?wait=true", json = data).content.decode())['id']
+    print(f"Created new message with id {msg_id}")
 else:
-    settings['msg_id'] = json.loads(requests.post(f"{settings['webhook']}?wait=true", json = data).content.decode())['id']
-    print(f"Created new message with id {settings['msg_id']}")
-    with open('settings.yaml', 'w') as ys:
-        yaml.dump(settings, ys, default_flow_style = False)
+    r = requests.patch(f"{settings['webhook']}/messages/{settings['msg_id']}", json = data)
