@@ -99,7 +99,7 @@ if(bs2_extra_data):
         "description": f"{family_description}{family_table}"
     })
 
-if 'msg_id' in settings:
+if settings.get('msg_id'):
     r = requests.patch(f"{settings['webhook']}/messages/{settings['msg_id']}", json = data)
 #    if r.status_code != 200:
 #        settings.pop('msg_id')
@@ -107,5 +107,6 @@ if 'msg_id' in settings:
 #            yaml.dump(settings, ys, default_flow_style = False)
 else:
     settings['msg_id'] = json.loads(requests.post(f"{settings['webhook']}?wait=true", json = data).content.decode())['id']
+    print(f"Created new message with id {settings['msg_id']}")
     with open('settings.yaml', 'w') as ys:
         yaml.dump(settings, ys, default_flow_style = False)
