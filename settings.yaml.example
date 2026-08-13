@@ -5,6 +5,8 @@ servers:
 - oneday.onehouronelife.com
 - server1.onehouronelife.com
 - server2.onehouronelife.com
+- server7.onehouronelife.com
+- server12.onehouronelife.com
 webhook: 
 
 trim_domain: no
