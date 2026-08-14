@@ -73,7 +73,7 @@ if(settings["use_bs2_bot"] and BS2_SERVER in settings['servers']):
     except Exception as e:
         print(e, "Error getting extra family data");
         bs2_extra_data = None
-        bs2_extra_data = str(e)
+        bs2_error_data = str(e)
 
 server_table = pad_lines("\n".join(server_lines), [1, 3])
 server_table = f'{server_table}\n---------------------------\nTotal ::: {total_players} / {total_available}'
