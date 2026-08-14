@@ -14,6 +14,7 @@ total_players = 0
 total_available = 0
 
 bs2_extra_data = None
+bs2_error_data = None
 bs2_server_ip = None
 
 def pad_lines(multiline_str:str, parts, end_space:int = 0, split_by:str = " "):
@@ -65,12 +66,14 @@ for server in settings['servers']:
     else:
         server_lines.append(f'|--> {server_display}{PORT_STRING} -> OFFLINE')
 
-# Attemp to get extra family data if enabled
+# Attemp to get extra family data if enabled, and we're tracking the BS2 server
 if(settings["use_bs2_bot"] and BS2_SERVER in settings['servers']):
     try:
         bs2_extra_data = get_bs2_player_status(settings["bs2_bot_token"], BS2_SERVER)
     except Exception as e:
-        print(e, "Error getting extra family data"); bs2_extra_data = None
+        print(e, "Error getting extra family data");
+        bs2_extra_data = None
+        bs2_extra_data = str(e)
     if(bs2_extra_data): bs2_server_ip = BS2_SERVER
 
 server_table = pad_lines("\n".join(server_lines), [1, 3])
@@ -96,6 +99,13 @@ if(bs2_extra_data):
         "color": 16777215,
         "description": f"{family_description}{family_table}"
     })
+if(bs2_error_data):
+    family_description = f"**Family data for `{bs2_server_ip}`:\n**"
+    data["embeds"].append({
+        "color" : 16711680,
+        "description": f"```Could not fetch data:\n{bs2_error_data}```"
+    })
+
 
 # Only makes a new message when asked, and prints the id for you to paste into
 # settings.yaml yourself

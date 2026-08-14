@@ -14,15 +14,11 @@ def create_url(token:str):
     }
 }
 """
-def get_bs2_player_status(token: str, server_ip:str) -> dict | None:
+def get_bs2_player_status(token: str) -> dict | None:
     if(not token): raise Exception("Token must be present")
-    if(server_ip != BS2_SERVER): return None
     url = create_url(token)
     r = requests.get(url, timeout = 10)
-    try: r.raise_for_status()
-    except Exception as E:
-        print(E)
-        return None
+    r.raise_for_status()
 
     response = r.json()
     if("error" in response): raise ConnectionError("Error", response["error"])
