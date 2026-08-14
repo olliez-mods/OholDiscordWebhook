@@ -69,12 +69,11 @@ for server in settings['servers']:
 # Attemp to get extra family data if enabled, and we're tracking the BS2 server
 if(settings["use_bs2_bot"] and BS2_SERVER in settings['servers']):
     try:
-        bs2_extra_data = get_bs2_player_status(settings["bs2_bot_token"], BS2_SERVER)
+        bs2_extra_data = get_bs2_player_status(settings["bs2_bot_token"])
     except Exception as e:
         print(e, "Error getting extra family data");
         bs2_extra_data = None
         bs2_extra_data = str(e)
-    if(bs2_extra_data): bs2_server_ip = BS2_SERVER
 
 server_table = pad_lines("\n".join(server_lines), [1, 3])
 server_table = f'{server_table}\n---------------------------\nTotal ::: {total_players} / {total_available}'
@@ -90,7 +89,7 @@ data = {
 }
 
 if(bs2_extra_data):
-    family_description = f"**Family data for `{bs2_server_ip}`:\n**"
+    family_description = f"**Family data for `{BS2_SERVER}`:\n**"
     family_table = ""
     for family in bs2_extra_data.values():
         family_table = f"{family_table}{family['name']} - Pop:{family['count']}, Gen:{family['generation']}\n"
@@ -100,7 +99,7 @@ if(bs2_extra_data):
         "description": f"{family_description}{family_table}"
     })
 if(bs2_error_data):
-    family_description = f"**Family data for `{bs2_server_ip}`:\n**"
+    family_description = f"**Family data for `{BS2_SERVER}`:\n**"
     data["embeds"].append({
         "color" : 16711680,
         "description": f"```Could not fetch data:\n{bs2_error_data}```"
