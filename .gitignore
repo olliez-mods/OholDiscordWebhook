@@ -2,3 +2,4 @@
 config.ini
 config.ini.bak
 __pycache__
+settings.yaml
