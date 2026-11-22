@@ -107,7 +107,7 @@ def get_statuses(servers, settings:dict) -> dict:
     Falls back to probing directly if the cache is disabled or unusable, so a broken
     cache can slow this down but can never stop it returning results.
     """
-    # .get throughout: the other instances have settings.yaml files predating these keys
+    # .get throughout: the other instances may have settings.ini files predating these keys
     if(not settings.get("cache", True)):
         return {server: probe_server(server) for server in servers}
 
