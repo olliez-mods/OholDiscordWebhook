@@ -7,8 +7,8 @@ from quick_ini import QuickIni
 import server_cache
 from get_player_stats import get_bs2_player_status, BS2_SERVER
 
-# template=True adds any settings new to settings.ini.template into settings.ini
-QuickIni.load_file('settings.ini', template=True)
+# template=True adds any settings new to config.ini.template into config.ini
+QuickIni.load_file('config.ini', template=True)
 settings = QuickIni.get_all()
 
 total_players = 0
@@ -108,7 +108,7 @@ if(bs2_error_data):
 
 
 # Only makes a new message when asked, and prints the id for you to paste into
-# settings.ini yourself
+# config.ini yourself
 if(len(sys.argv) > 1 and sys.argv[1] == "create"):
     msg_id = json.loads(requests.post(f"{settings['webhook']}?wait=true", json = data).content.decode())['id']
     print(f"Created new message with id {msg_id}")
