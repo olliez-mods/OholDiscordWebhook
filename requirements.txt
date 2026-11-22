@@ -1,0 +1,2 @@
+quick_ini>=4.3
+requests>=2.34.2
