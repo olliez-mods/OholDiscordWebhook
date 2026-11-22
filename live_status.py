@@ -91,10 +91,14 @@ data = {
 
 if(bs2_extra_data):
     family_description = f"**Family data for `{BS2_SERVER}`:\n**"
-    family_table = ""
-    for family in bs2_extra_data.values():
-        family_table = f"{family_table}{family['name']} - Pop:{family['count']}, Gen:{family['generation']}\n"
-    family_table = f"```{pad_lines(family_table, [0, 2])}```"
+    family_lines = [
+        f"{family['name']} - Pop:{family['count']}, Gen:{family['generation']}"
+        for family in bs2_extra_data["families"].values()
+    ]
+    family_table = pad_lines("\n".join(family_lines), [0, 2])
+    # Added after padding so the ghost line doesn't widen the family columns
+    separator = "-" * max((len(line) for line in family_table.split("\n")), default=20)
+    family_table = f"```{family_table}\n{separator}\nGhosts ::: {bs2_extra_data['ghosts']}```"
     data["embeds"].append({
         "color": 16777215,
         "description": f"{family_description}{family_table}"

@@ -6,12 +6,17 @@ def create_url(token:str):
     return f"http://yummy.antinoid.com/tutbot/api/get_players_live?token={token}&only_alive=1&hide_lineage=1"
 
 """
+Returns the living families and the number of ghosts (players aged GHOST_AGE or over).
+Ghosts aren't counted in any family's count or generation
 {
-    "fam_name": {
-        "name":"JOHNSS",
-        "count":12,
-        "generation":56
-    }
+    "families": {
+        "fam_name": {
+            "name":"JOHNSS",
+            "count":12,
+            "generation":56
+        }
+    },
+    "ghosts": 3
 }
 """
 def get_bs2_player_status(token: str) -> dict | None:
@@ -25,8 +30,12 @@ def get_bs2_player_status(token: str) -> dict | None:
 
     # Do some parsing
     result = {}
+    ghosts = 0
 
-    for player in r.json():
+    for player in response:
+
+        if(player.get("is_ghost")): ghosts += 1
+
         name = str(player.get("name"))
         if(" " not in name): continue # Doesn't have first and last name, or not provided, continue
         first, last = name.split()
@@ -36,7 +45,6 @@ def get_bs2_player_status(token: str) -> dict | None:
 
         fam = result.get(last)
         if(not fam):
-            if(player.get("age", 0) >= 59): continue # Don't count ghosts, if it's only them in the family
             result[last] = {"name":last, "count":0, "generation":0}
             fam = result[last]
 
@@ -44,4 +52,4 @@ def get_bs2_player_status(token: str) -> dict | None:
         fam["count"] += 1
         fam["generation"] = max(fam["generation"], generation)
 
-    return result
+    return {"families": result, "ghosts": ghosts}
