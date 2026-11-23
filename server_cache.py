@@ -2,9 +2,34 @@ import os
 import json
 import time
 import errno
-import fcntl
+import sys
 import socket
 import tempfile
+
+# The probe lock needs an OS-level file lock: flock on Linux/macOS, msvcrt on Windows
+if(sys.platform == "win32"):
+    import msvcrt
+
+    def _try_lock(lock_file):
+        lock_file.seek(0)
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+
+    def _unlock(lock_file):
+        lock_file.seek(0)
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+
+    # msvcrt reports a held lock as EACCES or EDEADLOCK depending on the Python build
+    _LOCK_BUSY = (errno.EACCES, errno.EAGAIN, errno.EDEADLOCK)
+else:
+    import fcntl
+
+    def _try_lock(lock_file):
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+    def _unlock(lock_file):
+        fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+    _LOCK_BUSY = (errno.EACCES, errno.EAGAIN)
 
 # Several copies of this script run side by side on one machine, one per Discord
 # server, all on the same minute and all probing nearly the same host list. Without
@@ -82,10 +107,10 @@ def _acquire_lock(path:str, timeout:int):
     deadline = time.time() + timeout
     while True:
         try:
-            fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _try_lock(lock_file)
             return lock_file
         except OSError as e:
-            if(e.errno not in (errno.EACCES, errno.EAGAIN)):
+            if(e.errno not in _LOCK_BUSY):
                 lock_file.close()
                 raise
             if(time.time() >= deadline):
@@ -96,7 +121,7 @@ def _acquire_lock(path:str, timeout:int):
 
 def _release_lock(lock_file):
     try:
-        fcntl.flock(lock_file, fcntl.LOCK_UN)
+        _unlock(lock_file)
     finally:
         lock_file.close()
 
