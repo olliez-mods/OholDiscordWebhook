@@ -119,7 +119,7 @@ if(bs2_extra_data):
         "description": f"{family_description}{family_table}"
     })
 if(bs2_error_data):
-    family_description = f"**Family data for `{BS2_SERVER}`:\n**"
+    family_description = f"**Family data:\n**"
     data["embeds"].append({
         "color" : 16711680,
         "description": f"```Could not fetch data```"
