@@ -43,17 +43,29 @@ JASON_REFLECTOR_URL = "https://onehouronelife.com/reflector/server.php?action=re
 
 # Shared with the other instances on this machine, so the servers get probed once per
 # cycle however many of us cron starts at the same moment
-statuses = server_cache.get_statuses(settings['servers'], settings)
+# An entry made only of dashes (e.g. "|---" in config.ini) is a divider between server
+# groups, not a host, so it is never probed
+def is_separator(entry) -> bool:
+    entry = str(entry).strip()
+    return entry != "" and set(entry) == {"-"}
+
+SEPARATOR_PLACEHOLDER = "<<separator>>"
+
+probe_servers = [server for server in settings['servers'] if not is_separator(server)]
+statuses = server_cache.get_statuses(probe_servers, settings)
 
 # These numbers can be as old as the cache TTL, so stamp the embed with when they were
 # actually gathered rather than with now
-c_time = server_cache.oldest_timestamp(statuses, settings['servers'])
+c_time = server_cache.oldest_timestamp(statuses, probe_servers)
 sp_relative = f'<t:{c_time}:R>'
 sp_full = f'<t:{c_time}:F>'
 
 description = f'{sp_full}\nRemote servers ([URL LINK]({JASON_REFLECTOR_URL})):\n'
 
 for server in settings['servers']:
+    if(is_separator(server)):
+        server_lines.append(SEPARATOR_PLACEHOLDER)
+        continue
     server_display = str(server)
     domain_to_trim = settings["domain_to_trim"]
     if(settings["trim_domain"] and server_display.endswith(domain_to_trim)):
@@ -77,7 +89,10 @@ if(settings["use_bs2_bot"] and BS2_SERVER in settings['servers']):
         bs2_error_data = str(e)
 
 server_table = pad_lines("\n".join(server_lines), [1, 3])
-server_table = f'{server_table}\n---------------------------\nTotal ::: {total_players} / {total_available}'
+# Swapped in after padding so dividers span the padded server rows
+table_width = max((len(line) for line in server_table.split("\n") if line != SEPARATOR_PLACEHOLDER), default=20)
+server_table = server_table.replace(SEPARATOR_PLACEHOLDER, "|" + "-" * (table_width - 1))
+server_table = f'{server_table}\n{"-"*table_width}\nTotal ::: {total_players} / {total_available}'
 description = f'{description}```\n{server_table}\n```\n'
 description = f'{description}Last update: {sp_relative}\n'
 
